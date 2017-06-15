@@ -16,13 +16,14 @@
 import physicalgraph.zigbee.clusters.iaszone.ZoneStatus
 
 metadata {
-	definition (name: "Tyco Door/Window Sensor", namespace: "smartthings", author: "SmartThings", category: "C2") {
+	definition (name: "Tyco Door/Window Sensor", namespace: "smartthings", author: "SmartThings") {
 		capability "Battery"
 		capability "Configuration"
 		capability "Contact Sensor"
 		capability "Refresh"
 		capability "Temperature Measurement"
 		capability "Health Check"
+		capability "Sensor"
 
 		command "enrollResponse"
 
@@ -41,8 +42,8 @@ metadata {
 
 	tiles {
     	standardTile("contact", "device.contact", width: 2, height: 2) {
-			state("open", label:'${name}', icon:"st.contact.contact.open", backgroundColor:"#ffa81e")
-			state("closed", label:'${name}', icon:"st.contact.contact.closed", backgroundColor:"#79b821")
+			state("open", label:'${name}', icon:"st.contact.contact.open", backgroundColor:"#e86d13")
+			state("closed", label:'${name}', icon:"st.contact.contact.closed", backgroundColor:"#00A0DC")
 		}
 
 		valueTile("temperature", "device.temperature", inactiveLabel: false) {
@@ -181,22 +182,17 @@ private Map getBatteryResult(rawValue) {
 	log.debug 'Battery'
 	def linkText = getLinkText(device)
 
-    def result = [
-    	name: 'battery'
-    ]
+    def result = [:]
 
-	def volts = rawValue / 10
-	def descriptionText
-	if (volts > 3.5) {
-		result.descriptionText = "${linkText} battery has too much power (${volts} volts)."
-	}
-	else {
+	if (!(rawValue == 0 || rawValue == 255)) {
+		def volts = rawValue / 10
 		def minVolts = 2.1
-    	def maxVolts = 3.0
+		def maxVolts = 3.0
 		def pct = (volts - minVolts) / (maxVolts - minVolts)
 		def roundedPct = Math.round(pct * 100)
 		result.value = Math.min(100, roundedPct)
 		result.descriptionText = "${linkText} battery was ${result.value}%"
+		result.name = 'battery'
 	}
 
 	return result
@@ -265,7 +261,7 @@ def configure() {
         //"raw 0x500 {01 23 00 00 00}", "delay 200",
         //"send 0x${device.deviceNetworkId} 1 1", "delay 1500",
 	]
-    return configCmds + zigbee.batteryConfig() + zigbee.temperatureConfig(30, 300) + refresh() // send refresh cmds as part of config
+    return enrollCmds + zigbee.batteryConfig() + zigbee.temperatureConfig(30, 300) + refresh() // send refresh cmds as part of config
 }
 
 def enrollResponse() {

@@ -20,6 +20,9 @@
  *      JLH - 02-15-2014 - Fuller use of ecobee API
  *      10-28-2015 DVCSMP-604 - accessory sensor, DVCSMP-1174, DVCSMP-1111 - not respond to routines
  */
+
+include 'localization'
+
 definition(
 		name: "Ecobee (Connect)",
 		namespace: "smartthings",
@@ -78,7 +81,7 @@ def authPage() {
 		return dynamicPage(name: "auth", title: "Select Your Thermostats", uninstall: true) {
 			section("") {
 				paragraph "Tap below to see the list of ecobee thermostats available in your ecobee account and select the ones you want to connect to SmartThings."
-				input(name: "thermostats", title:"", type: "enum", required:true, multiple:true, description: "Tap to choose", metadata:[values:stats])
+				input(name: "thermostats", title:"Select Your Thermostats", type: "enum", required:true, multiple:true, description: "Tap to choose", metadata:[values:stats])
 			}
 
 			def options = sensorsDiscovered() ?: []
@@ -86,7 +89,7 @@ def authPage() {
 			if (numFound > 0)  {
 				section("") {
 					paragraph "Tap below to see the list of ecobee sensors available in your ecobee account and select the ones you want to connect to SmartThings."
-					input(name: "ecobeesensors", title:"Select Ecobee Sensors (${numFound} found)", type: "enum", required:false, description: "Tap to choose", multiple:true, options:options)
+					input(name: "ecobeesensors", title: "Select Ecobee Sensors ({{numFound}} found)", messageArgs: [numFound: numFound], type: "enum", required:false, description: "Tap to choose", multiple:true, options:options)
 				}
 			}
 		}
@@ -842,6 +845,7 @@ private void storeThermostatData(thermostats) {
             minCoolingSetpoint: (stat.settings.coolRangeLow / 10),
             maxCoolingSetpoint: (stat.settings.coolRangeHigh / 10),
             autoMode: stat.settings.autoHeatCoolFeatureEnabled,
+            deviceAlive: stat.runtime.connected == true ? "true" : "false",
             auxHeatMode: (stat.settings.hasHeatPump) && (stat.settings.hasForcedAir || stat.settings.hasElectric || stat.settings.hasBoiler),
             temperature: (stat.runtime.actualTemperature / 10),
             heatingSetpoint: stat.runtime.desiredHeat / 10,
